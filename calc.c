@@ -1,26 +1,32 @@
 #include<stdio.h>
 
-/*-------------------------------*/
 #define MAX_LENGTH 10
 
 //Char -> Float
 float myatoi(char *s){
-    int dec_cnt=0;
-    float value=0;
+    int dec_cnt=0, i=0;
+    float value=0, i_value=0, d_value=0;
     
     while(*s != '\n'){
-        if(*s != '.'){
-        //一番大きい桁から10倍して足していく
-            value = value*10 + (*s - '0');
-        } else {
-        //'.'が出てきてから小数点以下の桁数を数える
-            dec_cnt = -1;
-        }
+        i_value = i_value*10 + (*s - '0');
         s++;
-        dec_cnt++;
+        if(*s == '.'){
+            s++;
+            while(*s != '\n'){
+            //一番大きい桁から10倍して足していく
+                d_value = d_value*10 + (*s - '0');
+                s++;
+                dec_cnt++;
+            }
+            //最後に小数点分ずらす
+            while(i<dec_cnt){
+                d_value = d_value*0.1;
+                i++; 
+            }
+            
+        }
     }
-    //最後に小数点分ずらす
-    value = value*dec_cnt*0.1;
+    value = i_value + d_value;
     return value;
 }
 
@@ -49,6 +55,15 @@ float calc(char *op, float arg1, float arg2){
     return result;
 }
 
+//コマンド呼び出し
+void call_cmd(char* s){
+    switch(s[1]){
+        case 'q':
+        case 'c':
+            break;
+    }
+}
+
 //入力管理
 int input_cntl(char *s, int i_flg, int op_flg, int cmd_flg){
     read(0, s, MAX_LENGTH);
@@ -57,7 +72,7 @@ int input_cntl(char *s, int i_flg, int op_flg, int cmd_flg){
     } else if(s[0] == '+' || s[0] == '-' || s[0] == '*' || s[0] == '/' || s[0] == 'r' && op_flg){
         return 0;
     } else if (s[0] == ':' && cmd_flg){
-        //call cmd func
+        call_cmd(s);
         return 0;
     } else {
         printf("error\n");
@@ -77,7 +92,7 @@ int main(){
     i_arg1 = myatoi(c_arg1);
     printf("%f\n", i_arg1);
 
-while(1){
+    while(1){
     //set operator
         while(input_cntl(op, 0, 1, 1));
         op[1] = '\0';
