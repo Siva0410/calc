@@ -13,9 +13,9 @@ int myatoi(char *s){
     return value;
 }
 
-int calc(*c, arg1, arg2){
+int calc(char *op, int arg1, int arg2){
     int result=0;
-    switch(c){
+    switch(op[0]){
         case '+':
             result = arg1 + arg2;
             break;
@@ -39,7 +39,7 @@ int calc(*c, arg1, arg2){
 
 int main(){
     int i_arg1=0, i_arg2=0, i;
-    char c_arg1[MAX_LENGTH], c_arg2[MAX_LENGTH], c_op[MAX_LENGTH];
+    char c_arg1[MAX_LENGTH], c_arg2[MAX_LENGTH], op[MAX_LENGTH];
 
 //set first argment
     read(0, c_arg1, MAX_LENGTH);
@@ -48,17 +48,18 @@ int main(){
 
 while(1){
     //set operator
-        read(0, c_op, MAX_LENGTH);
-        printf("%d %c\n", i_arg1, c_op);
+        read(0, op, 2);
+        op[1] = '\0';
+        printf("%d %s\n", i_arg1, op);
 
     //set second argment
         read(0, c_arg2, MAX_LENGTH);
         i_arg2 = myatoi(c_arg2);
-        printf("%d %c %d\n", i_arg1, c_op, i_arg2);
+        printf("%d %s %d\n", i_arg1, op, i_arg2);
 
     //result and set first argment
-        i_arg1 = calc(c_op, arg1, arg2);    
-        printf("%d\n", i_arg1);
+        i_arg1 = calc(op, i_arg1, i_arg2);    
+        printf("= %d\n", i_arg1);
     }  
 
         return 0;
