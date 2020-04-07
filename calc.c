@@ -12,6 +12,7 @@ enum CMD {
     init,
     q_cmd,
     c_cmd,
+    ce_cmd,
     loop,
     integer,
     operator,
@@ -103,13 +104,12 @@ int input_ctrl(char *s, FLAG flags){
         return integer;
     } else if(!mystrcmp(s, "+") || !mystrcmp(s, "-") || !mystrcmp(s, "*") || !mystrcmp(s, "/") || !mystrcmp(s, "r") && flags.op_flag){
         return operator;
-    } else if (s[0] == ':' && flags.cmd_flag){
-        switch(s[1]){
-            case 'q':
-                return q_cmd;
-            case 'c':
-                return c_cmd;
-        }
+    } else if (!mystrcmp(s, ":c") && flags.cmd_flag){
+        return c_cmd;
+    } else if (!mystrcmp(s, ":ce") && flags.cmd_flag){
+        return ce_cmd;
+    } else if (!mystrcmp(s, ":q") && flags.cmd_flag){
+        return q_cmd;
     } else {
         printf("error\n");
         return error;
@@ -119,7 +119,7 @@ int input_ctrl(char *s, FLAG flags){
 
 int main(){
     int i;
-    float i_arg1=0, i_arg2=0;
+    float i_arg0=0, i_arg1=0, i_arg2=0;
     char arg[MAX_LENGTH],op[MAX_LENGTH];
     FLAG flags = {0,0,0};
 
@@ -136,6 +136,7 @@ int main(){
             case integer:
                 i_arg2 = myatof(arg);
                 printf("%f %s %f\n", i_arg1, op, i_arg2);
+                i_arg0 = i_arg1;
                 i_arg1 = calc(op, i_arg1, i_arg2);    
                 printf("= %f\n", i_arg1);
                 flags.i_flag = 0;
@@ -159,8 +160,18 @@ int main(){
                 flags.cmd_flag = 0;
                 continue;
             
+            case ce_cmd:
+                i_arg1=i_arg0;
+                i_arg2=0;
+                printf("%f %s\n", i_arg1, op);
+                flags.i_flag = 1;
+                flags.op_flag = 0;
+                flags.cmd_flag = 1;
+                continue;
+
             case q_cmd:
                 return 0;
+            
         }
     }  
 }
