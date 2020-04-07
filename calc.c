@@ -2,6 +2,22 @@
 
 #define MAX_LENGTH 10
 
+typedef struct {
+    int i_flag;
+    int op_flag;
+    int cmd_flag;
+} FLAG;
+
+enum CMD {
+    init,
+    q_cmd,
+    c_cmd,
+    loop,
+    integer,
+    operator,
+    error,
+};
+
 //Char -> Float
 float myatoi(char *s){
     int dec_cnt=0, i=0;
@@ -55,28 +71,25 @@ float calc(char *op, float arg1, float arg2){
     return result;
 }
 
-//コマンド呼び出し
-void call_cmd(char* s){
-    switch(s[1]){
-        case 'q':
-        case 'c':
-            break;
-    }
-}
-
 //入力管理
-int input_cntl(char *s, int i_flg, int op_flg, int cmd_flg){
+int input_ctrl(char *s, FLAG flags){
     read(0, s, MAX_LENGTH);
-    if('0' <= s[0] && s[0] <= '9' && i_flg){
-        return 0;
-    } else if(s[0] == '+' || s[0] == '-' || s[0] == '*' || s[0] == '/' || s[0] == 'r' && op_flg){
-        return 0;
-    } else if (s[0] == ':' && cmd_flg){
-        call_cmd(s);
-        return 0;
+    if(!(flags.i_flag) && !(flags.op_flag) && !(flags.cmd_flag)){
+        return init;
+    } else if('0' <= s[0] && s[0] <= '9' && flags.i_flag){
+        return integer;
+    } else if(s[0] == '+' || s[0] == '-' || s[0] == '*' || s[0] == '/' || s[0] == 'r' && flags.op_flag){
+        return operator;
+    } else if (s[0] == ':' && flags.cmd_flag){
+        switch(s[1]){
+            case 'q':
+                return q_cmd;
+            case 'c':
+                return c_cmd;
+        }
     } else {
         printf("error\n");
-        return 1;
+        return error;
     }
 
 }
@@ -85,28 +98,46 @@ int main(){
     int i;
     float i_arg1=0, i_arg2=0;
     char c_arg1[MAX_LENGTH], c_arg2[MAX_LENGTH], op[MAX_LENGTH];
-
-//set first argment
-    while(input_cntl(c_arg1, 1, 0, 1));
-    //read(0, c_arg1, MAX_LENGTH);
-    i_arg1 = myatoi(c_arg1);
-    printf("%f\n", i_arg1);
+    FLAG flags = {0,0,0};
 
     while(1){
-    //set operator
-        while(input_cntl(op, 0, 1, 1));
-        op[1] = '\0';
-        printf("%f %s\n", i_arg1, op);
+        switch(input_ctrl(op, flags)){
+            case init:
+                i_arg1 = myatoi(c_arg1);
+                printf("%f\n", i_arg1);
+                flags.i_flag = 0;
+                flags.op_flag = 1;
+                flags.cmd_flag = 1;
+                break;
 
-    //set second argment
-        while(input_cntl(c_arg2, 1, 0, 1));
-        i_arg2 = myatoi(c_arg2);
-        printf("%f %s %f\n", i_arg1, op, i_arg2);
+            case integer:
+                i_arg2 = myatoi(c_arg2);
+                printf("%f %s %f\n", i_arg1, op, i_arg2);
+                i_arg1 = calc(op, i_arg1, i_arg2);    
+                printf("= %f\n", i_arg1);
+                flags.i_flag = 0;
+                flags.op_flag = 1;
+                flags.cmd_flag = 1;
+                break;
 
-    //result and set first argment
-        i_arg1 = calc(op, i_arg1, i_arg2);    
-        printf("= %f\n", i_arg1);
+            case operator:
+                op[1] = '\0';
+                printf("%f %s\n", i_arg1, op);
+                flags.i_flag = 1;
+                flags.op_flag = 0;
+                flags.cmd_flag = 1;
+                break;
+
+            case c_cmd:
+                i_arg1=0;
+                i_arg2=0;
+                flags.i_flag = 0;
+                flags.op_flag = 0;
+                flags.cmd_flag = 0;
+                continue;
+            
+            case q_cmd:
+                return 0;
+        }
     }  
-
-        return 0;
 }
