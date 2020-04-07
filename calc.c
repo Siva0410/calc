@@ -97,13 +97,13 @@ int input_ctrl(char *s, FLAG flags){
 int main(){
     int i;
     float i_arg1=0, i_arg2=0;
-    char c_arg1[MAX_LENGTH], c_arg2[MAX_LENGTH], op[MAX_LENGTH];
+    char arg[MAX_LENGTH],op[MAX_LENGTH];
     FLAG flags = {0,0,0};
 
     while(1){
-        switch(input_ctrl(op, flags)){
+        switch(input_ctrl(arg, flags)){
             case init:
-                i_arg1 = myatoi(c_arg1);
+                i_arg1 = myatoi(arg);
                 printf("%f\n", i_arg1);
                 flags.i_flag = 0;
                 flags.op_flag = 1;
@@ -111,7 +111,7 @@ int main(){
                 break;
 
             case integer:
-                i_arg2 = myatoi(c_arg2);
+                i_arg2 = myatoi(arg);
                 printf("%f %s %f\n", i_arg1, op, i_arg2);
                 i_arg1 = calc(op, i_arg1, i_arg2);    
                 printf("= %f\n", i_arg1);
@@ -121,6 +121,7 @@ int main(){
                 break;
 
             case operator:
+                op[0] = arg[0];
                 op[1] = '\0';
                 printf("%f %s\n", i_arg1, op);
                 flags.i_flag = 1;
