@@ -5,7 +5,7 @@
 typedef struct {
     int i_flag;
     int op_flag;
-    int cmd_flag;
+    //int cmd_flag;
 } FLAG;
 
 enum CMD {
@@ -13,11 +13,33 @@ enum CMD {
     q_cmd,
     c_cmd,
     ce_cmd,
+    mp_cmd,
+    mm_cmd,
+    mi_cmd,
+    mc_cmd,
+    mr_cmd,
+    ac_cmd,
     loop,
     integer,
     operator,
     error,
 };
+
+int check_num(char *s){
+    while(*s != '\0'){
+        if('0' > *s || *s > '9' && *s != '.')
+        return 0;
+        if(*s == '.'){
+            while(*s != '\0'){
+                if('0' > *s || *s > '9')
+                return 0;
+                s++;
+            }
+        }
+        s++;
+    }
+    return 1;
+}
 
 //Char -> Float
 float myatof(char *s){
@@ -98,17 +120,29 @@ int input_ctrl(char *s, FLAG flags){
     }
     s[i] = '\0';
 
-    if(!(flags.i_flag) && !(flags.op_flag) && !(flags.cmd_flag)){
+    if(check_num(s) && !(flags.i_flag) && !(flags.op_flag)){
         return init;
-    } else if('0' <= s[0] && s[0] <= '9' && flags.i_flag){
+    } else if(check_num(s) && flags.i_flag){
         return integer;
+    } else if (!mystrcmp(s, ":mi") && flags.i_flag){
+        return mi_cmd;
     } else if(!mystrcmp(s, "+") || !mystrcmp(s, "-") || !mystrcmp(s, "*") || !mystrcmp(s, "/") || !mystrcmp(s, "r") && flags.op_flag){
         return operator;
-    } else if (!mystrcmp(s, ":c") && flags.cmd_flag){
+    } else if (!mystrcmp(s, ":m+") && flags.op_flag){
+        return mp_cmd;
+    } else if (!mystrcmp(s, ":m-") && flags.op_flag){
+        return mm_cmd;
+    } else if (!mystrcmp(s, ":mr") && flags.op_flag){
+        return mr_cmd;
+    } else if (!mystrcmp(s, ":mc")){
+        return mc_cmd;
+    } else if (!mystrcmp(s, ":ac")){
+        return ac_cmd;
+    } else if (!mystrcmp(s, ":c")){
         return c_cmd;
-    } else if (!mystrcmp(s, ":ce") && flags.cmd_flag){
+    } else if (!mystrcmp(s, ":ce")){
         return ce_cmd;
-    } else if (!mystrcmp(s, ":q") && flags.cmd_flag){
+    } else if (!mystrcmp(s, ":q")){
         return q_cmd;
     } else {
         printf("error\n");
@@ -119,18 +153,17 @@ int input_ctrl(char *s, FLAG flags){
 
 int main(){
     int i;
-    float i_arg0=0, i_arg1=0, i_arg2=0;
+    float i_arg0=0, i_arg1=0, i_arg2=0, mem=0;
     char arg[MAX_LENGTH],op[MAX_LENGTH];
-    FLAG flags = {0,0,0};
+    FLAG flags = {0,0};
 
     while(1){
         switch(input_ctrl(arg, flags)){
             case init:
                 i_arg1 = myatof(arg);
-                printf("%f\n", i_arg1);
+                printf("%f\tmemory : %f\n", i_arg1, mem);
                 flags.i_flag = 0;
                 flags.op_flag = 1;
-                flags.cmd_flag = 1;
                 break;
 
             case integer:
@@ -138,35 +171,85 @@ int main(){
                 printf("%f %s %f\n", i_arg1, op, i_arg2);
                 i_arg0 = i_arg1;
                 i_arg1 = calc(op, i_arg1, i_arg2);    
-                printf("= %f\n", i_arg1);
+                printf("= %f\tmemory : %f\n", i_arg1, mem);
                 flags.i_flag = 0;
                 flags.op_flag = 1;
-                flags.cmd_flag = 1;
                 break;
 
             case operator:
                 mystrcpy(op, arg);
-                printf("%f %s\n", i_arg1, op);
+                printf("%f %s\tmemory : %f\n", i_arg1, op, mem);
                 flags.i_flag = 1;
                 flags.op_flag = 0;
-                flags.cmd_flag = 1;
                 break;
 
+            case mp_cmd:
+                printf("%f + %f\n", i_arg1, mem);
+                i_arg0 = i_arg1;
+                i_arg1 = calc("+", i_arg1, mem);    
+                printf("= %f\tmemory : %f\n", i_arg1, mem);
+                flags.i_flag = 0;
+                flags.op_flag = 1;
+                break;
+
+            case mm_cmd:
+                printf("%f - %f\n", i_arg1, mem);
+                i_arg0 = i_arg1;
+                i_arg1 = calc("-", i_arg1, mem);    
+                printf("= %f\tmemory : %f\n", i_arg1, mem);
+                flags.i_flag = 0;
+                flags.op_flag = 1;
+                break;
+
+            case mi_cmd:
+                i_arg2 = mem;
+                printf("%f %s %f\n", i_arg1, op, i_arg2);
+                i_arg0 = i_arg1;
+                i_arg1 = calc(op, i_arg1, i_arg2);    
+                printf("= %f\tmemory : %f\n", i_arg1, mem);
+                flags.i_flag = 0;
+                flags.op_flag = 1;
+                break;
+
+            case mr_cmd:
+                mem = i_arg1;    
+                printf("\t\tmemory : %f\n", mem);
+                break;
+
+            case mc_cmd:
+                mem = 0;    
+                printf("\t\tmemory : %f\n", mem);
+                break;
+
+            case ac_cmd:
+                i_arg0=0;
+                i_arg1=0;
+                i_arg2=0;
+                mem=0;
+                flags.i_flag = 0;
+                flags.op_flag = 0;
+                continue;
+
             case c_cmd:
+                i_arg0=0;
                 i_arg1=0;
                 i_arg2=0;
                 flags.i_flag = 0;
                 flags.op_flag = 0;
-                flags.cmd_flag = 0;
                 continue;
             
             case ce_cmd:
-                i_arg1=i_arg0;
-                i_arg2=0;
-                printf("%f %s\n", i_arg1, op);
-                flags.i_flag = 1;
-                flags.op_flag = 0;
-                flags.cmd_flag = 1;
+                if(flags.op_flag == 1){
+                    i_arg1=i_arg0;
+                    i_arg2=0;
+                    printf("%f %s\tmemory : %f\n", i_arg1, op, mem);
+                    flags.i_flag = 1;
+                    flags.op_flag = 0;
+                } else if(flags.i_flag == 1){
+                    printf("%f \tmemory : %f\n", i_arg1, mem);
+                    flags.i_flag = 0;
+                    flags.op_flag = 1;
+                }
                 continue;
 
             case q_cmd:
