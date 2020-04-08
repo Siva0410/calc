@@ -3,14 +3,12 @@
 #define MAX_LENGTH 20
 #define MAX_NUMBER 99999999
 typedef struct {
-    int i_flag;
-    int op_flag;
-    int init_flag;
+    int input_flag; //1: input number 0: input operator
+    int init_flag;  //1: init 
     int error_flag;
 } FLAG;
 
 enum CMD {
-    init,
     q_cmd,
     c_cmd,
     ce_cmd,
@@ -27,26 +25,13 @@ enum CMD {
     error_len,
 };
 
-int check_num(char *s){
-    int i_cnt = 0, d_cnt = 0;
-    while(*s != '\0'){
-        if(*s == '.'){
-            s++;
-            while(*s != '\0'){
-                if('0' > *s || *s > '9') return 0;
-                if(d_cnt > 6) return error_len;
-                d_cnt++;
-                s++;
-            }
-            return 1;
-        }
-        if('0' > *s || *s > '9') return 0;
-        if(i_cnt > 7) return error_len;
-        i_cnt++;
-        s++;
-    }
-    return 1;
-}
+enum ERROR {
+    no_error = 0,
+    invalid_input,
+    zero_division,
+    long_input,
+    long_output,
+};
 
 //Char -> Float
 float myatof(char *s){
@@ -112,6 +97,27 @@ float calc(char *op, float arg1, float arg2){
     return result;
 }
 
+int check_num(char *s){
+    int i_cnt = 0, d_cnt = 0;
+    while(*s != '\0'){
+        if(*s == '.'){
+            s++;
+            while(*s != '\0'){
+                if('0' > *s || *s > '9') return 0;
+                if(d_cnt > 6) return error_len;
+                d_cnt++;
+                s++;
+            }
+            return 1;
+        }
+        if('0' > *s || *s > '9') return 0;
+        if(i_cnt > 7) return error_len;
+        i_cnt++;
+        s++;
+    }
+    return 1;
+}
+
 //入力管理
 int input_ctrl(char *s, FLAG flags){
     int check_len = 0, i = 0;
@@ -124,19 +130,16 @@ int input_ctrl(char *s, FLAG flags){
     }
     *s = '\0';
     s = s0;
-    if ((check_len=check_num(s)) && !(flags.i_flag) && !(flags.op_flag)){
-        if(check_len == error_len) return error_len;
-        return init;
-    } else if ((check_len=check_num(s)) && flags.i_flag){
+    if ((check_len=check_num(s)) && flags.input_flag){
         if(check_len == error_len) return error_len;
         return integer;
-    } else if (!mystrcmp(s, ":mr") && flags.i_flag){
+    } else if (!mystrcmp(s, ":mr") && flags.input_flag){
         return mr_cmd;
-    } else if (!mystrcmp(s, "+") || !mystrcmp(s, "-") || !mystrcmp(s, "*") || !mystrcmp(s, "/") && flags.op_flag){
+    } else if (!mystrcmp(s, "+") || !mystrcmp(s, "-") || !mystrcmp(s, "*") || !mystrcmp(s, "/") && !flags.input_flag){
         return operator;
-    } else if (!mystrcmp(s, ":m+") && flags.op_flag){
+    } else if (!mystrcmp(s, ":m+") && !flags.input_flag){
         return mp_cmd;
-    } else if (!mystrcmp(s, ":m-") && flags.op_flag){
+    } else if (!mystrcmp(s, ":m-") && !flags.input_flag){
         return mm_cmd;
     } else if (!mystrcmp(s, ":mc")){
         return mc_cmd;
@@ -149,126 +152,120 @@ int input_ctrl(char *s, FLAG flags){
     } else if (!mystrcmp(s, ":q")){
         return q_cmd;
     } else {
-        printf("%d\n",check_len);
         return error;
     }
 
 }
 
+void comment_ctrl(FLAG flags, float arg0, float arg1, float arg2, float mem, char *op){
+
+    switch(flags.error_flag){
+        case no_error:
+            break;
+        case invalid_input:
+            printf("Error : Invalid input\n");
+            break;
+        case zero_division:
+            printf("Error : Zero division\n");
+            break;
+        case long_input:
+            printf("Error : Too long input\n");
+            break;
+        case long_output:
+            printf("Error : Too long output\n");
+            break;
+    }
+
+        if(!flags.input_flag && flags.init_flag){
+            printf("%f\tmemory : %f\n", arg1, mem);
+        } else if(!flags.input_flag){
+            printf("%f %s %f\n", arg0, op, arg2);
+            printf("= %f\tmemory : %f\n", arg1, mem);
+        } else{
+            printf("%f %s\tmemory : %f\n", arg1, op, mem);
+        }
+}
+
 int main(){
     float i_arg0 = 0, i_arg1 = 0, i_arg2 = 0, mem = 0, mem0 = 0;
-    char arg[MAX_LENGTH],op[MAX_LENGTH];
-    FLAG flags = {0,0,0,0};
+    char arg[MAX_LENGTH], op[MAX_LENGTH];
+    FLAG flags = {1, 1, no_error};
 
     printf("Hello! Please input number.\n");
 
     while(1){
-        if(flags.i_flag == 0 && flags.op_flag == 0){
-            printf("Please input fist term or available commands.\n");
-        } else if(flags.i_flag == 1 && flags.op_flag == 0){
-            printf("%f %s\tmemory : %f\n", i_arg1, op, mem);
-            printf("%f %s %f\n", i_arg0, op, i_arg2);
-            printf("= %f\tmemory : %f\n", i_arg1, mem);
-        } else if(flags.i_flag == 0 && flags.op_flag == 1){
-            printf("%f\tmemory : %f\n", i_arg1, mem);
-        }
-
         mystrcpy(arg,"");
 
         switch(input_ctrl(arg, flags)){
-            case init:
-                i_arg1 = myatof(arg);
-                printf("%f\tmemory : %f\n", i_arg1, mem);
-                flags.i_flag = 0;
-                flags.op_flag = 1;
-                break;
-
             case integer:
-                i_arg2 = myatof(arg);
-                printf("%f %s %f\n", i_arg1, op, i_arg2);
-                if(i_arg2 == 0 && !mystrcmp(op, "/")){
-                    printf("Error:Zero division\n");
-                    printf("%f %s\tmemory : %f\n", i_arg1, op, mem);
-                    flags.i_flag = 1;
-                    flags.op_flag = 0;
-                    break;
+                if(flags.init_flag){
+                    i_arg1 = myatof(arg);
+                    flags.input_flag = 0;
+                } else{
+                    i_arg2 = myatof(arg);
+                    if(i_arg2 == 0 && !mystrcmp(op, "/")){
+                        flags.error_flag = zero_division;
+                        flags.input_flag = 1;
+                        break;
+                    }
+                    i_arg0 = i_arg1;
+                    i_arg1 = calc(op, i_arg1, i_arg2);
+                    if(i_arg1 > MAX_NUMBER){
+                        i_arg1 = i_arg0;
+                        flags.error_flag = long_output;
+                        flags.input_flag = 1;
+                        break;
+                    }
+                    flags.input_flag = 0;
                 }
-                i_arg0 = i_arg1;
-                i_arg1 = calc(op, i_arg1, i_arg2);
-                if(i_arg1 > MAX_NUMBER){
-                    printf("Error:Too long output\n");
-                    printf("%f %s\tmemory : %f\n", i_arg0, op, mem);
-                    i_arg1 = i_arg0;
-                    flags.i_flag = 1;
-                    flags.op_flag = 0;
-                    break;
-                }
-                printf("= %f\tmemory : %f\n", i_arg1, mem);
-                flags.i_flag = 0;
-                flags.op_flag = 1;
                 break;
 
             case operator:
                 mystrcpy(op, arg);
-                printf("%f %s\tmemory : %f\n", i_arg1, op, mem);
-                flags.i_flag = 1;
-                flags.op_flag = 0;
+                flags.input_flag = 1;
                 break;
 
             case mp_cmd:
-                printf("\t\tmemory : %f + %f\n", mem, i_arg1);
                 mem0 = mem;
                 mem = calc("+", mem, i_arg1); 
                 if(mem > MAX_NUMBER){
-                    printf("Error:Too long output\n");
-                    printf("%f\tmemory : %f\n", i_arg1, mem0);
                     mem = mem0;
-                    break;
-                }   
-                printf("%f\tmemory : %f\n", i_arg1, mem);
+                    flags.error_flag = long_output;
+                } 
+                flags.init_flag = 1;
                 break;
 
             case mm_cmd:
-                printf("\t\tmemory : %f - %f\n", mem, i_arg1);
                 mem0 = mem;
                 mem = calc("-", mem, i_arg1);
                 if(mem > MAX_NUMBER){
-                    printf("Error:Too long output\n");
-                    printf("%f\tmemory : %f\n", i_arg1, mem0);
                     mem = mem0;
-                    break;
+                    flags.error_flag = long_output;
                 }
-                printf("%f\tmemory : %f\n", i_arg1, mem);
+                flags.init_flag = 1;
                 break;
 
             case mr_cmd:
                 i_arg2 = mem;
-                printf("%f %s %f\n", i_arg1, op, i_arg2);
                 if(i_arg2 == 0 && !mystrcmp(op, "/")){
-                    printf("Error:Zero division\n");
-                    printf("%f %s\tmemory : %f\n", i_arg1, op, mem);
-                    flags.i_flag = 1;
-                    flags.op_flag = 0;
+                    flags.error_flag = zero_division;
+                    flags.input_flag = 1;
                     break;
                 }
                 i_arg0 = i_arg1;
                 i_arg1 = calc(op, i_arg1, i_arg2);
                 if(i_arg1 > MAX_NUMBER){
-                    printf("Error:Too long output\n");
-                    printf("%f %s\tmemory : %f\n", i_arg0, op, mem);
                     i_arg1 = i_arg0;
-                    flags.i_flag = 1;
-                    flags.op_flag = 0;
+                    flags.error_flag = long_output;
+                    flags.input_flag = 1;
                     break;
                 } 
-                printf("= %f\tmemory : %f\n", i_arg1, mem);
-                flags.i_flag = 0;
-                flags.op_flag = 1;
+                flags.input_flag = 0;
                 break;
 
             case mc_cmd:
                 mem = 0;    
-                printf("\t\tmemory : %f\n", mem);
+                flags.init_flag = 1;
                 break;
 
             case ac_cmd:
@@ -276,29 +273,26 @@ int main(){
                 i_arg1 = 0;
                 i_arg2 = 0;
                 mem = 0;
-                flags.i_flag = 0;
-                flags.op_flag = 0;
+                flags.input_flag = 0;
+                flags.init_flag = 1;
                 break;
 
             case c_cmd:
                 i_arg0 = 0;
                 i_arg1 = 0;
                 i_arg2 = 0;
-                flags.i_flag = 0;
-                flags.op_flag = 0;
+                flags.input_flag = 0;
+                flags.init_flag = 1;
                 break;
             
             case ce_cmd:
-                if(flags.op_flag == 1){
+                if(!flags.input_flag){
                     i_arg1=i_arg0;
                     i_arg2 = 0;
-                    printf("%f %s\tmemory : %f\n", i_arg1, op, mem);
-                    flags.i_flag = 1;
-                    flags.op_flag = 0;
-                } else if(flags.i_flag == 1){
-                    printf("%f \tmemory : %f\n", i_arg1, mem);
-                    flags.i_flag = 0;
-                    flags.op_flag = 1;
+                    flags.input_flag = 1;
+                } else if(flags.input_flag){
+                    flags.input_flag = 0;
+                    flags.init_flag = 1;
                 }
                 break;
 
@@ -307,27 +301,20 @@ int main(){
                 return 0;
             
             case error:
-                printf("Error:Invalid input\n");
-                if(flags.i_flag == 0 && flags.op_flag == 0){
-                    printf("Please input fist term or available commands.\n");
-                } else if(flags.i_flag == 0 && flags.op_flag == 1){
-                    printf("Please input any operator or available commands.\n");
-                    printf("%f\tmemory : %f\n", i_arg1, mem);
-                } else if(flags.i_flag == 1 && flags.op_flag == 0){
-                    printf("Please input second term or available commands.\n");
-                    printf("%f %s\tmemory : %f\n", i_arg1, op, mem);
-                }
+                flags.error_flag = invalid_input;
+                flags.init_flag = 1;
                 break;
 
             case error_len:
-                printf("Error:Too long input\n");
-                if(flags.i_flag == 0 && flags.op_flag == 0){
-                    printf("Please input appropriate length number.\n");
-                } else if(flags.i_flag == 1 && flags.op_flag == 0){
-                    printf("Please input appropriate length number.\n");
-                    printf("%f %s\tmemory : %f\n", i_arg1, op, mem);
-                }
+                flags.input_flag = 0;
+                flags.error_flag = long_input;
+                flags.init_flag = 1;
                 break;
         }
+
+        comment_ctrl(flags, i_arg0, i_arg1, i_arg2, mem, op);
+
+        flags.error_flag = no_error;
+        flags.init_flag = 0;
     }  
 }
