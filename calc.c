@@ -5,7 +5,8 @@
 typedef struct {
     int i_flag;
     int op_flag;
-    //int cmd_flag;
+    int init_flag;
+    int error_flag;
 } FLAG;
 
 enum CMD {
@@ -114,23 +115,24 @@ float calc(char *op, float arg1, float arg2){
 //入力管理
 int input_ctrl(char *s, FLAG flags){
     int check_len = 0, i = 0;
+    char *s0;
 
     read(0, s, MAX_LENGTH);
-
-    while(s[i] != '\n'){
-        i++;
+    s0 = s;
+    while(*s != '\n' && *s != EOF){
+        s++;
     }
-    s[i] = '\0';
-
-    if((check_len=check_num(s)) && !(flags.i_flag) && !(flags.op_flag)){
+    *s = '\0';
+    s = s0;
+    if ((check_len=check_num(s)) && !(flags.i_flag) && !(flags.op_flag)){
         if(check_len == error_len) return error_len;
         return init;
-    } else if((check_len=check_num(s)) && flags.i_flag){
+    } else if ((check_len=check_num(s)) && flags.i_flag){
         if(check_len == error_len) return error_len;
         return integer;
     } else if (!mystrcmp(s, ":mr") && flags.i_flag){
         return mr_cmd;
-    } else if(!mystrcmp(s, "+") || !mystrcmp(s, "-") || !mystrcmp(s, "*") || !mystrcmp(s, "/") && flags.op_flag){
+    } else if (!mystrcmp(s, "+") || !mystrcmp(s, "-") || !mystrcmp(s, "*") || !mystrcmp(s, "/") && flags.op_flag){
         return operator;
     } else if (!mystrcmp(s, ":m+") && flags.op_flag){
         return mp_cmd;
@@ -154,14 +156,25 @@ int input_ctrl(char *s, FLAG flags){
 }
 
 int main(){
-    int i;
     float i_arg0 = 0, i_arg1 = 0, i_arg2 = 0, mem = 0, mem0 = 0;
     char arg[MAX_LENGTH],op[MAX_LENGTH];
-    FLAG flags = {0,0};
+    FLAG flags = {0,0,0,0};
 
     printf("Hello! Please input number.\n");
 
     while(1){
+        if(flags.i_flag == 0 && flags.op_flag == 0){
+            printf("Please input fist term or available commands.\n");
+        } else if(flags.i_flag == 1 && flags.op_flag == 0){
+            printf("%f %s\tmemory : %f\n", i_arg1, op, mem);
+            printf("%f %s %f\n", i_arg0, op, i_arg2);
+            printf("= %f\tmemory : %f\n", i_arg1, mem);
+        } else if(flags.i_flag == 0 && flags.op_flag == 1){
+            printf("%f\tmemory : %f\n", i_arg1, mem);
+        }
+
+        mystrcpy(arg,"");
+
         switch(input_ctrl(arg, flags)){
             case init:
                 i_arg1 = myatof(arg);
