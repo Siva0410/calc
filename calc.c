@@ -34,7 +34,7 @@ enum ERROR {
 
 //Char -> Float
 float myatof(char *s){
-    int d_cnt = 0, i = 0;
+    int d_cnt = 0;
     float value = 0, i_value = 0, d_value = 0;
     
     while(*s != '\0'){
@@ -42,19 +42,15 @@ float myatof(char *s){
         s++;
         if(*s == '.'){
             s++;
-            while(*s != '\0'){
-                d_value = d_value*10 + (*s - '0');
-                s++;
-                d_cnt++;
-            }
-            while(i<d_cnt){
+            d_value = myatof(s);
+            while(d_value >= 1){
                 d_value = d_value*0.1;
-                i++; 
             }
+            value = i_value + d_value;
+            return value;
         }
     }
-    value = i_value + d_value;
-    return value;
+    return i_value;
 }
 
 int mystrcmp(char *s1, char *s2){
@@ -317,7 +313,6 @@ int main(){
             case error_length:
                 flags.input_flag = 1;
                 flags.error_flag = long_input;
-                //flags.init_flag = 1;
                 break;
         }
 
