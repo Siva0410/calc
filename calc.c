@@ -4,7 +4,7 @@
 #define MAX_NUMBER 99999999
 typedef struct {
     int input_flag; //1: input number 0: input operator
-    int init_flag;  //1: init 
+    int init_flag;  //1: init 0: continue
     int error_flag; //one of ERROR status
 } FLAG;
 
@@ -89,6 +89,8 @@ float calc(char *op, float arg1, float arg2){
     return result;
 }
 
+//if arg is not number return 0
+//else return length of number
 int check_num(char *s){
     int i_cnt = 0;
     while(*s != '\0'){
@@ -107,7 +109,7 @@ int check_num(char *s){
     return i_cnt;
 }
 
-//入力管理
+//alaysis arg and return CMD TAG
 int input_ctrl(char *s, int input_num_len, FLAG flags){
     int int_len = 0, dec_len = 0;
 
@@ -140,6 +142,7 @@ int input_ctrl(char *s, int input_num_len, FLAG flags){
 
 }
 
+//print statements according to flags
 void comment_ctrl(FLAG flags, float arg0, float arg1, float arg2, float mem, char *op){
 
     switch(flags.error_flag){
@@ -181,7 +184,7 @@ int main(){
     printf("Hello! Please input number.\n");
 
     while(1){
- 
+        //input
         input_num_len = 0;
         input_len = read(0, arg, MAX_LENGTH);
         if(input_len == 0){
