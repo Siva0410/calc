@@ -5,7 +5,7 @@
 typedef struct {
     int input_flag; //1: input number 0: input operator
     int init_flag;  //1: init 
-    int error_flag;
+    int error_flag; //one of ERROR status
 } FLAG;
 
 enum INPUT {
@@ -18,19 +18,17 @@ enum INPUT {
     mc_cmd,
     mr_cmd,
     ac_cmd,
-    integer,
+    number,
     operator,
-    error,
-    error_len,
-    eof_error,
+    error_invalid_input,
+    error_length,
 };
 
 enum ERROR {
-    no_error = 0,
+    no_error,
     invalid_input,
     zero_division,
     long_input,
-
     long_output,
 };
 
@@ -53,7 +51,6 @@ float myatof(char *s){
                 d_value = d_value*0.1;
                 i++; 
             }
-            
         }
     }
     value = i_value + d_value;
@@ -76,10 +73,10 @@ void mystrcpy(char *s1, char *s2){
     return ;
 }
 
-//Calculate +,-,*,/,root
+//Calculate +,-,*,/
 float calc(char *op, float arg1, float arg2){
     float result = 0;
-    switch(op[0]){
+    switch(*op){
         case '+':
             result = arg1 + arg2;
             break;
@@ -97,43 +94,32 @@ float calc(char *op, float arg1, float arg2){
 }
 
 int check_num(char *s){
-    int i_cnt = 0, d_cnt = 0;
+    int i_cnt = 0;
     while(*s != '\0'){
-        if(*s == '.'){
+        if(*s == '.' && i_cnt > 0){
             s++;
             while(*s != '\0'){
                 if('0' > *s || *s > '9') return 0;
-                if(d_cnt > 6) return error_len;
-                d_cnt++;
                 s++;
             }
-            return 1;
+            return i_cnt;
         }
         if('0' > *s || *s > '9') return 0;
-        if(i_cnt > 7) return error_len;
         i_cnt++;
         s++;
     }
-    return 1;
+    return i_cnt;
 }
 
 //入力管理
-int input_ctrl(char *s, FLAG flags){
-    int check_len = 0, i = 0, input_num= 0;
-    char *s0;
+int input_ctrl(char *s, int input_num_len, FLAG flags){
+    int int_len = 0, dec_len = 0;
 
-    input_num = read(0, s, MAX_LENGTH);
-    if(input_num == 0) return eof_error;
-    *(s+input_num) = '\0';
-    s0 = s;
-    while(*s != '\n' && *s != '\0'){
-        s++;
-    }
-    *s = '\0';
-    s = s0;
-    if ((check_len=check_num(s)) && flags.input_flag){
-        if(check_len == error_len) return error_len;
-        return integer;
+    int_len = check_num(s);
+    dec_len = input_num_len - (int_len + 1);
+    if (int_len != 0 && flags.input_flag){
+        if(int_len > 7 || dec_len > 7) return error_length;
+        return number;
     } else if (!mystrcmp(s, ":mr") && flags.input_flag){
         return mr_cmd;
     } else if (!mystrcmp(s, "+") || !mystrcmp(s, "-") || !mystrcmp(s, "*") || !mystrcmp(s, "/") && !flags.input_flag){
@@ -153,7 +139,7 @@ int input_ctrl(char *s, FLAG flags){
     } else if (!mystrcmp(s, ":q")){
         return q_cmd;
     } else {
-        return error;
+        return error_invalid_input;
     }
 
 }
@@ -190,17 +176,32 @@ void comment_ctrl(FLAG flags, float arg0, float arg1, float arg2, float mem, cha
 }
 
 int main(){
+    int input_num_len = 0, input_len = 0;
     float i_arg0 = 0, i_arg1 = 0, i_arg2 = 0, mem = 0, mem0 = 0;
     char arg[MAX_LENGTH+1], op[MAX_LENGTH+1];
+    char *cnt;
     FLAG flags = {1, 1, no_error};
 
     printf("Hello! Please input number.\n");
 
     while(1){
-        mystrcpy(arg,"");
+ 
+        input_num_len = 0;
+        input_len = read(0, arg, MAX_LENGTH);
+        if(input_len == 0){
+            printf("Error: Invalid input EOF\n");
+            return -1;
+        }
+        *(arg+input_len) = '\0';
+        cnt = arg;
+        while(*cnt != '\n' && *cnt != '\0'){
+            input_num_len++;
+            cnt++;
+        }
+        *cnt = '\0';
 
-        switch(input_ctrl(arg, flags)){
-            case integer:
+        switch(input_ctrl(arg, input_num_len, flags)){
+            case number:
                 if(flags.init_flag){
                     i_arg1 = myatof(arg);
                     flags.input_flag = 0;
@@ -308,20 +309,15 @@ int main(){
                 printf("See you!\n");
                 return 0;
             
-            case error:
+            case error_invalid_input:
                 flags.error_flag = invalid_input;
                 flags.init_flag = 1;
                 break;
 
-            case error_len:
-                flags.input_flag = 0;
+            case error_length:
+                flags.input_flag = 1;
                 flags.error_flag = long_input;
-                flags.init_flag = 1;
-                break;
-
-            case eof_error:
-                printf("Error: Ivalid input EOF\n");
-                return -1;
+                //flags.init_flag = 1;
                 break;
         }
 
