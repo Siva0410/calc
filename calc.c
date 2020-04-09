@@ -30,6 +30,7 @@ enum ERROR {
     invalid_input,
     zero_division,
     long_input,
+
     long_output,
 };
 
@@ -181,6 +182,8 @@ void comment_ctrl(FLAG flags, float arg0, float arg1, float arg2, float mem, cha
         } else if(!flags.input_flag){
             printf("%f %s %f\n", arg0, op, arg2);
             printf("= %f\tmemory : %f\n", arg1, mem);
+        } else if(flags.input_flag && flags.init_flag){
+            printf("Please input number.\tmemory : %f\n", mem);
         } else{
             printf("%f %s\tmemory : %f\n", arg1, op, mem);
         }
@@ -223,6 +226,7 @@ int main(){
             case operator:
                 mystrcpy(op, arg);
                 flags.input_flag = 1;
+                flags.init_flag = 0;
                 break;
 
             case mp_cmd:
@@ -273,7 +277,7 @@ int main(){
                 i_arg1 = 0;
                 i_arg2 = 0;
                 mem = 0;
-                flags.input_flag = 0;
+                flags.input_flag = 1;
                 flags.init_flag = 1;
                 break;
 
@@ -281,7 +285,7 @@ int main(){
                 i_arg0 = 0;
                 i_arg1 = 0;
                 i_arg2 = 0;
-                flags.input_flag = 0;
+                flags.input_flag = 1;
                 flags.init_flag = 1;
                 break;
             
@@ -290,6 +294,10 @@ int main(){
                     i_arg1=i_arg0;
                     i_arg2 = 0;
                     flags.input_flag = 1;
+                } else if(flags.input_flag && flags.init_flag){
+                    i_arg0 = 0;
+                    i_arg1 = 0;
+                    i_arg2 = 0;
                 } else if(flags.input_flag){
                     flags.input_flag = 0;
                     flags.init_flag = 1;
@@ -315,6 +323,5 @@ int main(){
         comment_ctrl(flags, i_arg0, i_arg1, i_arg2, mem, op);
 
         flags.error_flag = no_error;
-        flags.init_flag = 0;
     }  
 }
