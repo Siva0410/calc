@@ -8,7 +8,7 @@ typedef struct {
     int error_flag;
 } FLAG;
 
-enum CMD {
+enum INPUT {
     q_cmd,
     c_cmd,
     ce_cmd,
@@ -18,11 +18,11 @@ enum CMD {
     mc_cmd,
     mr_cmd,
     ac_cmd,
-    loop,
     integer,
     operator,
     error,
     error_len,
+    eof_error,
 };
 
 enum ERROR {
@@ -45,12 +45,10 @@ float myatof(char *s){
         if(*s == '.'){
             s++;
             while(*s != '\0'){
-            //一番大きい桁から10倍して足していく
                 d_value = d_value*10 + (*s - '0');
                 s++;
                 d_cnt++;
             }
-            //最後に小数点分ずらす
             while(i<d_cnt){
                 d_value = d_value*0.1;
                 i++; 
@@ -121,12 +119,14 @@ int check_num(char *s){
 
 //入力管理
 int input_ctrl(char *s, FLAG flags){
-    int check_len = 0, i = 0;
+    int check_len = 0, i = 0, input_num= 0;
     char *s0;
 
-    read(0, s, MAX_LENGTH);
+    input_num = read(0, s, MAX_LENGTH);
+    if(input_num == 0) return eof_error;
+    *(s+input_num) = '\0';
     s0 = s;
-    while(*s != '\n' && *s != EOF){
+    while(*s != '\n' && *s != '\0'){
         s++;
     }
     *s = '\0';
@@ -191,7 +191,7 @@ void comment_ctrl(FLAG flags, float arg0, float arg1, float arg2, float mem, cha
 
 int main(){
     float i_arg0 = 0, i_arg1 = 0, i_arg2 = 0, mem = 0, mem0 = 0;
-    char arg[MAX_LENGTH], op[MAX_LENGTH];
+    char arg[MAX_LENGTH+1], op[MAX_LENGTH+1];
     FLAG flags = {1, 1, no_error};
 
     printf("Hello! Please input number.\n");
@@ -317,6 +317,11 @@ int main(){
                 flags.input_flag = 0;
                 flags.error_flag = long_input;
                 flags.init_flag = 1;
+                break;
+
+            case eof_error:
+                printf("Error: Ivalid input EOF\n");
+                return -1;
                 break;
         }
 
