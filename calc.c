@@ -1,7 +1,8 @@
 #include<stdio.h>
 
 #define MAX_LENGTH 20
-#define MAX_NUMBER 99999999
+#define MAX_NUMBER 10000000
+#define SIGNIFICANT_DEGIT 7
 typedef struct {
     int input_flag; //1: input number 0: input operator
     int init_flag;  //1: init 0: continue
@@ -31,10 +32,10 @@ enum ERROR {
     long_input,
     long_output,
 };
-
+  
 //Char -> Float
 float myatof(char *s){
-    int d_cnt = 0;
+  int d_cnt = 0, i = 0;
     float value = 0, i_value = 0, d_value = 0;
     
     while(*s != '\0'){
@@ -42,9 +43,14 @@ float myatof(char *s){
         s++;
         if(*s == '.'){
             s++;
-            d_value = myatof(s);
-            while(d_value >= 1){
+	    while(*s != '\0'){
+	      d_value = d_value*10 + (*s - '0');
+	      d_cnt++;
+	      s++;
+	    }
+            while(d_cnt > i){
                 d_value = d_value*0.1;
+		i++;
             }
             value = i_value + d_value;
             return value;
@@ -144,7 +150,22 @@ int input_ctrl(char *s, int input_num_len, FLAG flags){
 
 //print statements according to flags
 void comment_ctrl(FLAG flags, float arg0, float arg1, float arg2, float mem, char *op){
+  int int_num = 0, dec_num[4] = {}, i = 0;
+  float cnt[4] = {};
+    cnt[0] = arg0;
+    cnt[1] = arg1;
+    cnt[2] = arg2;
+    cnt[3] = mem;
 
+    while(i < 4){
+      int_num = 0;
+      while(cnt[i] >= 1){
+	cnt[i] = cnt[i]/10;
+	int_num++;
+      }
+      dec_num[i] = SIGNIFICANT_DEGIT - int_num;
+      i++;
+    }
     switch(flags.error_flag){
         case no_error:
             break;
@@ -163,14 +184,14 @@ void comment_ctrl(FLAG flags, float arg0, float arg1, float arg2, float mem, cha
     }
 
         if(!flags.input_flag && flags.init_flag){
-            printf("%f\tmemory : %f\n", arg1, mem);
+	  printf("%-8.*f\tmemory : %-8.*f\n", dec_num[1], arg1, dec_num[3], mem);
         } else if(!flags.input_flag){
-            printf("%f %s %f\n", arg0, op, arg2);
-            printf("= %f\tmemory : %f\n", arg1, mem);
+	  printf("%-8.*f %s %-8.*f\n", dec_num[0], arg0, op, dec_num[2], arg2);
+	  printf("= %-8.*f\tmemory : %-8.*f\n", dec_num[1], arg1, dec_num[3], mem);
         } else if(flags.input_flag && flags.init_flag){
-            printf("Please input number.\tmemory : %f\n", mem);
+	  printf("Please input number.\tmemory : %-8.*f\n", dec_num[3], mem);
         } else{
-            printf("%f %s\tmemory : %f\n", arg1, op, mem);
+	  printf("%-8.*f %s\tmemory : %-8.*f\n", dec_num[1], arg1, op, dec_num[3], mem);
         }
 }
 
