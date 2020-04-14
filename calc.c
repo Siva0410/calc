@@ -150,21 +150,21 @@ int input_ctrl(char *s, int input_num_len, FLAG flags){
 
 //print statements according to flags
 void comment_ctrl(FLAG flags, float arg0, float arg1, float arg2, float mem, char *op){
-  int int_num = 0, dec_num[4] = {}, i = 0;
-  float cnt[4] = {};
+    int int_num = 0, dec_num[4] = {}, i = 0;
+    float cnt[4] = {};
     cnt[0] = arg0;
     cnt[1] = arg1;
     cnt[2] = arg2;
     cnt[3] = mem;
 
     while(i < 4){
-      int_num = 0;
-      while(cnt[i] >= 1){
-	cnt[i] = cnt[i]/10;
-	int_num++;
-      }
-      dec_num[i] = SIGNIFICANT_DEGIT - int_num;
-      i++;
+        int_num = 0;
+        while(cnt[i] >= 1){
+	        cnt[i] = cnt[i]/10;
+	    int_num++;
+        }
+        dec_num[i] = SIGNIFICANT_DEGIT - int_num;
+        i++;
     }
     switch(flags.error_flag){
         case no_error:
@@ -183,16 +183,16 @@ void comment_ctrl(FLAG flags, float arg0, float arg1, float arg2, float mem, cha
             break;
     }
 
-        if(!flags.input_flag && flags.init_flag){
-	  printf("%-8.*f\tmemory : %-8.*f\n", dec_num[1], arg1, dec_num[3], mem);
-        } else if(!flags.input_flag){
-	  printf("%-8.*f %s %-8.*f\n", dec_num[0], arg0, op, dec_num[2], arg2);
-	  printf("= %-8.*f\tmemory : %-8.*f\n", dec_num[1], arg1, dec_num[3], mem);
-        } else if(flags.input_flag && flags.init_flag){
-	  printf("Please input number.\tmemory : %-8.*f\n", dec_num[3], mem);
-        } else{
-	  printf("%-8.*f %s\tmemory : %-8.*f\n", dec_num[1], arg1, op, dec_num[3], mem);
-        }
+    if(!flags.input_flag && flags.init_flag){
+        printf("%-8.*f\tmemory : %-8.*f\n", dec_num[1], arg1, dec_num[3], mem);
+    } else if(!flags.input_flag){
+        printf("%-8.*f %s %-8.*f\n", dec_num[0], arg0, op, dec_num[2], arg2);
+	    printf("= %-8.*f\tmemory : %-8.*f\n", dec_num[1], arg1, dec_num[3], mem);
+    } else if(flags.input_flag && flags.init_flag){
+        printf("Please input number.\tmemory : %-8.*f\n", dec_num[3], mem);
+    } else{
+	    printf("%-8.*f %s\tmemory : %-8.*f\n", dec_num[1], arg1, op, dec_num[3], mem);
+    }
 }
 
 int main(){
@@ -234,7 +234,7 @@ int main(){
                     }
                     i_arg0 = i_arg1;
                     i_arg1 = calc(op, i_arg1, i_arg2);
-                    if(i_arg1 > MAX_NUMBER){
+                    if(i_arg1 >= MAX_NUMBER){
                         i_arg1 = i_arg0;
                         flags.error_flag = long_output;
                         flags.input_flag = 1;
@@ -253,7 +253,7 @@ int main(){
             case mp_cmd:
                 mem0 = mem;
                 mem = calc("+", mem, i_arg1); 
-                if(mem > MAX_NUMBER){
+                if(mem >= MAX_NUMBER){
                     mem = mem0;
                     flags.error_flag = long_output;
                 } 
@@ -263,7 +263,7 @@ int main(){
             case mm_cmd:
                 mem0 = mem;
                 mem = calc("-", mem, i_arg1);
-                if(mem > MAX_NUMBER){
+                if(mem >= MAX_NUMBER){
                     mem = mem0;
                     flags.error_flag = long_output;
                 }
@@ -279,7 +279,7 @@ int main(){
                 }
                 i_arg0 = i_arg1;
                 i_arg1 = calc(op, i_arg1, i_arg2);
-                if(i_arg1 > MAX_NUMBER){
+                if(i_arg1 >= MAX_NUMBER){
                     i_arg1 = i_arg0;
                     flags.error_flag = long_output;
                     flags.input_flag = 1;
